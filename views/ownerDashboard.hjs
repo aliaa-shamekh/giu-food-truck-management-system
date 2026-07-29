@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      <link rel='stylesheet' href='/styles/bootstrap.min.css' />
+      <link rel='stylesheet' href='/styles/style.css' />
+      <script src="/js/jquery-2.2.0.min.js" type="text/javascript"></script>
+      <script src="/js/bootstrap.min.js" type="text/javascript"></script>
+      <script src="/src/ownerDashboard.js" type="text/javascript"></script>
+  </head>
+  <body>
+    <div>
+      <nav class="navbar navbar-inverse">
+          <div class="container-fluid">
+              <div class="navbar-header">
+                  <a class="navbar-brand" href="/ownerDashboard">GIU Food Trucks - Owner</a>
+              </div>
+              <ul class="nav navbar-nav">
+                <li class="active"><a href="/ownerDashboard">Dashboard</a></li>
+                <li><a href="/menuItems">Menu Items</a></li>
+                <li><a href="/truckOrders">Orders</a></li>
+              </ul>
+              <ul class="nav navbar-nav navbar-right">
+                <li><a href="#"><span class="glyphicon glyphicon-user"></span> {{ name }}</a></li>
+                <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> Logout</a></li>
+              </ul>
+          </div>
+      </nav>
+    </div>
+
+    <div class="container" style="margin-top: 30px;">
+      <div class="page-header">
+        <h1><span class="glyphicon glyphicon-dashboard"></span> Owner Dashboard</h1>
+      </div>
+
+      <div id="truck-info-panel" class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Truck Information</h3>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-md-8">
+              <h3 id="truck-name">Loading...</h3>
+              <p>
+                <strong>Status:</strong> <span id="truck-status"></span><br>
+                <strong>Order Availability:</strong> <span id="order-status"></span>
+              </p>
+            </div>
+            <div class="col-md-4 text-right">
+              <label for="availability-toggle">Accepting Orders:</label>
+              <select id="availability-toggle" class="form-control">
+                <option value="available">Available</option>
+                <option value="unavailable">Unavailable</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="panel panel-success">
+            <div class="panel-heading">
+              <h3 class="panel-title">Total Menu Items</h3>
+            </div>
+            <div class="panel-body text-center">
+              <h2 id="total-menu-items">0</h2>
+              <span class="glyphicon glyphicon-cutlery" style="font-size: 40px; color: #5cb85c;"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="panel panel-warning">
+            <div class="panel-heading">
+              <h3 class="panel-title">Pending Orders</h3>
+            </div>
+            <div class="panel-body text-center">
+              <h2 id="pending-orders">0</h2>
+              <span class="glyphicon glyphicon-time" style="font-size: 40px; color: #f0ad4e;"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="panel panel-info">
+            <div class="panel-heading">
+              <h3 class="panel-title">Total Orders</h3>
+            </div>
+            <div class="panel-body text-center">
+              <h2 id="total-orders">0</h2>
+              <span class="glyphicon glyphicon-list-alt" style="font-size: 40px; color: #5bc0de;"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Quick Actions</h3>
+            </div>
+            <div class="panel-body text-center">
+              <a href="/addMenuItem" class="btn btn-success btn-lg" style="margin: 10px;">
+                <span class="glyphicon glyphicon-plus"></span> Add Menu Item
+              </a>
+              <a href="/menuItems" class="btn btn-primary btn-lg" style="margin: 10px;">
+                <span class="glyphicon glyphicon-list"></span> Manage Menu
+              </a>
+              <a href="/truckOrders" class="btn btn-info btn-lg" style="margin: 10px;">
+                <span class="glyphicon glyphicon-shopping-cart"></span> View Orders
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h3 class="panel-title">Recent Orders</h3>
+            </div>
+            <div class="panel-body">
+              <div id="recent-orders-container">
+                <p class="text-center text-muted">Loading recent orders...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="loading-message" class="text-center" style="margin-top: 50px;">
+        <span class="glyphicon glyphicon-refresh glyphicon-spin" style="font-size: 40px;"></span>
+        <p>Loading dashboard...</p>
+      </div>
+    </div>
+  </body>
+</html>
+

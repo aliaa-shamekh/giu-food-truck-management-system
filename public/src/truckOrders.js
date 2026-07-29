@@ -1,0 +1,240 @@
+$(document).ready(function() {
+    let allOrders = [];
+    let currentFilter = 'all';
+
+    // Load orders
+    function loadOrders() {
+        $('#loading-message').show();
+        $('#no-orders-message').hide();
+        $('#orders-container').empty();
+
+        $.ajax({
+            type: "GET",
+            url: '/api/v1/order/truckOrders',
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function(orders) {
+                $('#loading-message').hide();
+                allOrders = orders;
+                
+                if (orders.length === 0) {
+                    $('#no-orders-message').show();
+                    return;
+                }
+
+                filterAndDisplayOrders(currentFilter);
+            },
+            error: function(errorResponse) {
+                $('#loading-message').hide();
+                alert('Error loading orders: ' + (errorResponse.responseText || 'Unknown error'));
+            }
+        });
+    }
+
+    // Filter and display orders
+    function filterAndDisplayOrders(filter) {
+        let filteredOrders = allOrders;
+        
+        if (filter !== 'all') {
+            filteredOrders = allOrders.filter(order => order.orderStatus === filter);
+        }
+
+        if (filteredOrders.length === 0) {
+            $('#orders-container').html('<p class="text-center text-muted">No orders found for this filter.</p>');
+            return;
+        }
+
+        displayOrders(filteredOrders);
+    }
+
+    // Display orders
+    function displayOrders(orders) {
+        let ordersHTML = '';
+
+        orders.forEach(function(order) {
+            const statusBadge = getStatusBadge(order.orderStatus);
+            const orderDate = new Date(order.createdAt).toLocaleString();
+            const pickupTime = order.scheduledPickupTime 
+                ? new Date(order.scheduledPickupTime).toLocaleString() 
+                : 'Not scheduled';
+
+            ordersHTML += `
+                <div class="panel panel-default order-row status-${order.orderStatus}">
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h4>
+                                    Order #${order.orderId} - ${order.customerName}
+                                    ${statusBadge}
+                                </h4>
+                                <p>
+                                    <strong>Order Date:</strong> ${orderDate}<br>
+                                    <strong>Pickup Time:</strong> ${pickupTime}<br>
+                                    <strong>Total:</strong> $${parseFloat(order.totalPrice).toFixed(2)}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="status-${order.orderId}">Update Status:</label>
+                                    <select class="form-control status-select" id="status-${order.orderId}" data-order-id="${order.orderId}">
+                                        <option value="pending" ${order.orderStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                                        <option value="preparing" ${order.orderStatus === 'preparing' ? 'selected' : ''}>Preparing</option>
+                                        <option value="ready" ${order.orderStatus === 'ready' ? 'selected' : ''}>Ready for Pickup</option>
+                                        <option value="completed" ${order.orderStatus === 'completed' ? 'selected' : ''}>Completed</option>
+                                        <option value="cancelled" ${order.orderStatus === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-success btn-sm update-status-btn" data-order-id="${order.orderId}">
+                                    <span class="glyphicon glyphicon-ok"></span> Update Status
+                                </button>
+                                <button class="btn btn-info btn-sm view-order-details-btn" data-order-id="${order.orderId}">
+                                    <span class="glyphicon glyphicon-eye-open"></span> View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        $('#orders-container').html(ordersHTML);
+    }
+
+    // Get status badge
+    function getStatusBadge(status) {
+        const badges = {
+            'pending': '<span class="label label-warning">Pending</span>',
+            'preparing': '<span class="label label-info">Preparing</span>',
+            'ready': '<span class="label label-success">Ready for Pickup</span>',
+            'completed': '<span class="label label-default">Completed</span>',
+            'cancelled': '<span class="label label-danger">Cancelled</span>'
+        };
+        return badges[status] || '<span class="label label-default">' + status + '</span>';
+    }
+
+    // Update order status
+    function updateOrderStatus(orderId) {
+        const newStatus = $('#status-' + orderId).val();
+
+        $.ajax({
+            type: "PUT",
+            url: `/api/v1/order/updateStatus/${orderId}`,
+            data: { orderStatus: newStatus },
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function() {
+                alert('Order status updated successfully!');
+                loadOrders(); // Reload orders
+            },
+            error: function(errorResponse) {
+                alert('Error updating status: ' + (errorResponse.responseText || 'Unknown error'));
+            }
+        });
+    }
+
+    // View order details
+    function viewOrderDetails(orderId) {
+        $.ajax({
+            type: "GET",
+            url: `/api/v1/order/truckOwner/${orderId}`,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function(orderDetails) {
+                displayOrderDetails(orderDetails);
+                $('#orderDetailsModal').modal('show');
+            },
+            error: function(errorResponse) {
+                alert('Error loading order details: ' + (errorResponse.responseText || 'Unknown error'));
+            }
+        });
+    }
+
+    // Display order details in modal
+    function displayOrderDetails(orderDetails) {
+        const statusBadge = getStatusBadge(orderDetails.orderStatus);
+        const orderDate = new Date(orderDetails.createdAt).toLocaleString();
+        const pickupTime = orderDetails.scheduledPickupTime 
+            ? new Date(orderDetails.scheduledPickupTime).toLocaleString() 
+            : 'Not scheduled';
+
+        let detailsHTML = `
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h4>Order #${orderDetails.orderId} - ${orderDetails.truckName}</h4>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        <strong>Status:</strong> ${statusBadge}<br>
+                        <strong>Order Date:</strong> ${orderDate}<br>
+                        <strong>Scheduled Pickup:</strong> ${pickupTime}
+                    </p>
+                </div>
+            </div>
+
+            <h4>Order Items</h4>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        orderDetails.items.forEach(function(item) {
+            const subtotal = parseFloat(item.price) * item.quantity;
+            detailsHTML += `
+                <tr>
+                    <td>${item.itemName}</td>
+                    <td>${item.quantity}</td>
+                    <td>$${parseFloat(item.price).toFixed(2)}</td>
+                    <td>$${subtotal.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+
+        detailsHTML += `
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                        <td><strong>$${parseFloat(orderDetails.totalPrice).toFixed(2)}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        `;
+
+        $('#order-details-content').html(detailsHTML);
+    }
+
+    // Handle filter button click
+    $(document).on('click', '.filter-btn', function() {
+        $('.filter-btn').removeClass('active btn-primary').addClass('btn-default');
+        $(this).removeClass('btn-default').addClass('active btn-primary');
+        
+        currentFilter = $(this).data('filter');
+        filterAndDisplayOrders(currentFilter);
+    });
+
+    // Handle update status button
+    $(document).on('click', '.update-status-btn', function() {
+        const orderId = $(this).data('order-id');
+        updateOrderStatus(orderId);
+    });
+
+    // Handle view details button
+    $(document).on('click', '.view-order-details-btn', function() {
+        const orderId = $(this).data('order-id');
+        viewOrderDetails(orderId);
+    });
+
+    // Load orders on page load
+    loadOrders();
+});
+
